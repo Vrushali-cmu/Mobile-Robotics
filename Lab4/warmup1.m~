@@ -1,0 +1,74 @@
+global re;      %right encoder value
+global le;      %left encoder value
+global vl;      %left wheel velocity (actual)
+global vr;      %right wheel velocity (actual)
+
+%set up a listener. Listener automatically updates actual left and right
+%velocity in the global
+lh = event.listener(robot.encoders,'OnMessageReceived',@neatoEncoderEventListener);
+pause(2);
+
+goalState = 100;
+actualState = 0;
+error = goalState-actualState;
+errorIntegral = 0;
+errorIntegralMax = 0.3;
+
+kp = 6.0;
+kd = 1.0;
+ki = 1.0;
+tf = 6.0;
+tstart = tic;
+t_prev = 0;
+
+rstart = re;
+lstart = le;
+
+figure(1);
+xlabel('millimeters');
+ylabel('seconds');
+
+while true
+    t_now = toc(tstart);                            %computer's clock
+    lasterror = error;                              
+    actualState = 0.5*((re-rstart)+(le-lstart));
+    error = goalState-actualState;
+    dt = t_now - t_prev;
+    errorDerivative = (error-lasterror)/dt;
+    errorIntegral = errorIntegral + (error*dt);
+    
+    sign = (errorIntegral>=0) + (errorIntegral<0)*(-1);
+    if abs(errorIntegral)>errorIntegralMax
+        errorIntegral = errorIntegralMax*sign;
+    end
+    
+    V = kp*error + kd*errorDerivative + ki*errorIntegral;
+
+    sign_V = (V>=0) + (V<0)*(-1);
+    if (abs(V)>0.3)
+        V = 0.3*sign_V;
+    end
+    
+    [vl_comp,vr_comp] = vwtolr(V,0);
+    robot.sendVelocity(vl_comp,vr_comp);
+    
+    figure(1);
+    scatter(t_now,error,'r');
+    hold on;
+    
+    if t_now>6.0
+        robot.sendVelocity(0,0);
+        break;
+    end
+    
+    if error<0.1
+        robot.sendVelocity(0,0);
+        break;
+    end
+    
+    pause(0.01);
+end
+
+robot.sendVelocity(0,0);
+delete(lh);             %delete the event listener
+robot.close();
