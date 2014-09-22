@@ -8,15 +8,15 @@ global vr;      %right wheel velocity (actual)
 lh = event.listener(robot.encoders,'OnMessageReceived',@neatoEncoderEventListener);
 pause(2);
 
-goalState = 100;
-actualState = 0;
-error = goalState-actualState;
-errorIntegral = 0;
-errorIntegralMax = 0.3;
+%goalState = 100;
+%actualState = 0;
+%error = goalState-actualState;
+%errorIntegral = 0;
+%errorIntegralMax = 0.3;
 
-kp = 6.0;
-kd = 1.0;
-ki = 1.0;
+%%kp = 0.002;
+kd = 0.0002;
+ki = 0.0001;
 tf = 6.0;
 tstart = tic;
 t_prev = 0;
@@ -24,14 +24,15 @@ t_prev = 0;
 rstart = re;
 lstart = le;
 
-figure(1);
-xlabel('millimeters');
-ylabel('seconds');
+figure(1);clf;
+ylabel('millimeters');
+xlabel('seconds');
+legend_str = sprintf('kp = %d\nkd = %d\nki = %d',kp,kd,ki);
 
 while true
     t_now = toc(tstart);                            %computer's clock
     lasterror = error;                              
-    actualState = 0.5*((re-rstart)+(le-lstart));
+    actualState = ((le-lstart));
     error = goalState-actualState;
     dt = t_now - t_prev;
     errorDerivative = (error-lasterror)/dt;
@@ -53,7 +54,8 @@ while true
     robot.sendVelocity(vl_comp,vr_comp);
     
     figure(1);
-    scatter(t_now,error,'r');
+    scatter(t_now,error);
+    legend(legend_str);
     hold on;
     
     if t_now>6.0
@@ -61,10 +63,12 @@ while true
         break;
     end
     
-    if error<0.1
-        robot.sendVelocity(0,0);
-        break;
-    end
+    %if error<0.1
+    %    robot.sendVelocity(0,0);
+    %    break;
+    %end
+    
+    t_prev=t_now;
     
     pause(0.01);
 end

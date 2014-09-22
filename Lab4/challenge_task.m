@@ -1,3 +1,13 @@
+figure(1);clf;
+ylabel('millimeters');
+xlabel('seconds');
+figure(2);clf;
+ylabel('millimeters');
+xlabel('seconds');
+sref=0;
+t_delay=0.1
+
+global tf;
 global re;      %right encoder value
 global le;      %left encoder value
 global vl;      %left wheel velocity (actual)
@@ -8,33 +18,31 @@ global vr;      %right wheel velocity (actual)
 lh = event.listener(robot.encoders,'OnMessageReceived',@neatoEncoderEventListener);
 pause(2);
 
-goalState = 100;
+
+lstart=le;
+goalState = 1000;
+error=0;
 actualState = 0;
-error = goalState-actualState;
 errorIntegral = 0;
 errorIntegralMax = 0.3;
 
-kp = 0.002;
-kd = 0.0002;
-ki = 0.0001;
-tf = 6.0;
-tstart = tic;
-t_prev = 0;
+kp = 0.003;
+kd = 0.0001;
+ki = 0.0002;
 
-rstart = re;
-lstart = le;
-
-figure(1);clf;
-ylabel('millimeters');
-xlabel('seconds');
-legend_str = sprintf('kp = %d\nkd = %d\nki = %d',kp,kd,ki);
-
+tstart=tic;
+t_prev=0;
 while true
-    t_now = toc(tstart);                            %computer's clock
+    t_now=toc(tstart);
+    %Feed-forward
+    uref = trapezoidalVelocityProfile((t_now-t_delay), 0.3*0.25, 0.25, 1.0, 1.0);
+    dt = t_now - t_prev;
+    sref=sref+uref*dt;
+    
+    %Feed-back
     lasterror = error;                              
     actualState = ((le-lstart));
-    error = goalState-actualState;
-    dt = t_now - t_prev;
+    error = sref*1000-actualState;
     errorDerivative = (error-lasterror)/dt;
     errorIntegral = errorIntegral + (error*dt);
     
@@ -44,35 +52,36 @@ while true
     end
     
     V = kp*error + kd*errorDerivative + ki*errorIntegral;
-
+    V = uref+V;
     sign_V = (V>=0) + (V<0)*(-1);
     if (abs(V)>0.3)
         V = 0.3*sign_V;
     end
     
-    [vl_comp,vr_comp] = vwtolr(V,0);
-    robot.sendVelocity(vl_comp,vr_comp);
+    robot.sendVelocity(V,V);
     
     figure(1);
-    scatter(t_now,error);
-    legend(legend_str);
+    scatter(t_now,sref);
+    scatter(t_now,(le-lstart)/1000,'+')
+    ylabel('meters');
+    xlabel('seconds');
+    legendstr = sprintf('t delay =  %d',t_delay);
+    legend(legendstr);
     hold on;
     
-    if t_now>6.0
+    figure(2);
+    scatter(t_now,uref);
+    ylabel('meters/sec');
+    xlabel('seconds');
+    hold on;
+    
+    if t_now>tf
         robot.sendVelocity(0,0);
         break;
     end
-    
-    %if error<0.1
-    %    robot.sendVelocity(0,0);
-    %    break;
-    %end
-    
     t_prev=t_now;
-    
-    pause(0.01);
+    %pause(0.001);
 end
-
 robot.sendVelocity(0,0);
-delete(lh);             %delete the event listener
+delete(lh);
 robot.close();
