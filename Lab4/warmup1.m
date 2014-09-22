@@ -14,9 +14,9 @@ error = goalState-actualState;
 errorIntegral = 0;
 errorIntegralMax = 0.3;
 
-kp = 10.0;
-kd = 2.0;
-ki = 1.0;
+kp = 0.003;
+kd = 0;
+ki = 0;
 tf = 6.0;
 tstart = tic;
 t_prev = 0;
@@ -25,8 +25,8 @@ rstart = re;
 lstart = le;
 
 figure(1);
-xlabel('millimeters');
-ylabel('seconds');
+ylabel('millimeters');
+xlabel('seconds');
 
 while true
     t_now = toc(tstart);                            %computer's clock
@@ -53,7 +53,7 @@ while true
     robot.sendVelocity(vl_comp,vr_comp);
     
     figure(1);
-    scatter(t_now,error,'r');
+    scatter(t_now,error);
     hold on;
     
     if t_now>6.0
@@ -61,10 +61,12 @@ while true
         break;
     end
     
-    if error<0.1
-        robot.sendVelocity(0,0);
-        break;
-    end
+    %if error<0.1
+    %    robot.sendVelocity(0,0);
+    %    break;
+    %end
+    
+    t_prev=t_now;
     
     pause(0.01);
 end
