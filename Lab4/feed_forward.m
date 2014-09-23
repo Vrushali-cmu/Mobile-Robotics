@@ -5,7 +5,6 @@ figure(2);clf;
 ylabel('millimeters');
 xlabel('seconds');
 sref=0;
-lstart=le;
 t_delay=0
 
 global tf;
@@ -19,6 +18,8 @@ global vr;      %right wheel velocity (actual)
 lh = event.listener(robot.encoders,'OnMessageReceived',@neatoEncoderEventListener);
 pause(2);
 
+
+lstart=le;
 tstart=tic;
 t_prev=0;
 while true
@@ -43,12 +44,12 @@ while true
     xlabel('seconds');
     hold on;
     
-    if t_now>tf
+    if t_now>=tf
         robot.sendVelocity(0,0);
         break;
     end
     t_prev=t_now;
-    pause(0.01);
+    %pause(0.001);
 end
 robot.sendVelocity(0,0);
 delete(lh);

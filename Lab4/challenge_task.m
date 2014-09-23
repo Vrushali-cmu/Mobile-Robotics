@@ -5,7 +5,8 @@ figure(2);clf;
 ylabel('millimeters');
 xlabel('seconds');
 sref=0;
-t_delay=0.1
+t_delay=0.0
+feedback_switch=1;
 
 global tf;
 global re;      %right encoder value
@@ -26,9 +27,9 @@ actualState = 0;
 errorIntegral = 0;
 errorIntegralMax = 0.3;
 
-kp = 0.003;
-kd = 0.0001;
-ki = 0.0002;
+kp = 0.004;
+kd = 0.0002;
+ki = 0.00015;
 
 tstart=tic;
 t_prev=0;
@@ -39,20 +40,27 @@ while true
     dt = t_now - t_prev;
     sref=sref+uref*dt;
     
+    
     %Feed-back
     lasterror = error;                              
     actualState = ((le-lstart));
     error = sref*1000-actualState;
-    errorDerivative = (error-lasterror)/dt;
-    errorIntegral = errorIntegral + (error*dt);
     
-    sign = (errorIntegral>=0) + (errorIntegral<0)*(-1);
-    if abs(errorIntegral)>errorIntegralMax
-        errorIntegral = errorIntegralMax*sign;
+    if feedback_switch==1    
+        errorDerivative = (error-lasterror)/dt;
+        errorIntegral = errorIntegral + (error*dt);
+    
+        sign = (errorIntegral>=0) + (errorIntegral<0)*(-1);
+        if abs(errorIntegral)>errorIntegralMax
+            errorIntegral = errorIntegralMax*sign;
+        end
+    
+        V = kp*error + kd*errorDerivative + ki*errorIntegral;
+        V = uref+V;
+    else
+        V=uref;
     end
     
-    V = kp*error + kd*errorDerivative + ki*errorIntegral;
-    V = uref+V;
     sign_V = (V>=0) + (V<0)*(-1);
     if (abs(V)>0.3)
         V = 0.3*sign_V;
@@ -70,12 +78,12 @@ while true
     hold on;
     
     figure(2);
-    scatter(t_now,uref);
-    ylabel('meters/sec');
+    scatter(t_now,error);
+    ylabel('millimeters');
     xlabel('seconds');
     hold on;
     
-    if t_now>tf
+    if t_now>(tf+1)
         robot.sendVelocity(0,0);
         break;
     end
