@@ -5,15 +5,15 @@ classdef robotTrajectory < handle
       poses
       time
       omega
-      ks = 0.5;
-      kv = 0.5;
+      Ks = 0.5;
+      Kv = 0.5;
       t_pause = 0.5;
       num_samples = 1000;
    end
    methods
         function obj = robotTrajectory()
             %robot_obj = robotModel();
-            velocity_obj = figure8ReferenceControl(ks,kv,t_pause);
+            velocity_obj = figure8ReferenceControl(obj.Ks,obj.Kv,obj.t_pause);
             tf = velocity_obj.getTrajectoryDuration();
             obj.distance = zeros(obj.num_samples,1);
             obj.velocity = zeros(obj.num_samples,1);
@@ -22,7 +22,9 @@ classdef robotTrajectory < handle
             dt = tf/obj.num_samples;
             obj.time = [1:obj.num_samples]*dt;
             for i=2:obj.num_samples
-                [obj.velocity(i),obj.omega(i)] = velocity_obj.computeControl(dt*(i-1));
+                velocity_obj.computeControl(dt*(i-1));
+                obj.velocity(i) = velocity_obj.v;
+                obj.omega(i) = velocity_obj.w;
                 obj.distance(i) = obj.distance(i-1) + obj.velocity(i-1)*dt;
                 temp_theta = obj.poses(i-1,3)+obj.omega(i-1)*dt/2;
                 obj.poses(i,1) = obj.poses(i-1,1)+obj.velocity(i-1)*cos(temp_theta)*dt;

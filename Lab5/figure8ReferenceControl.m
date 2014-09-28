@@ -10,7 +10,7 @@ classdef figure8ReferenceControl < handle
     
     methods (Static)
         function [v,w] = lrtovw(vl,vr)
-        d = 235;        %distance between the wheels
+        d = 0.235;        %distance between the wheels
         v = 0.5*(vl+vr);
         w = (vr-vl)/d;
         end
@@ -45,13 +45,13 @@ classdef figure8ReferenceControl < handle
             %}
         end
         
-        function computeControl(obj,timeNow)
+        function obj = computeControl(obj,timeNow)
             if timeNow<obj.tPause
                 obj.v = 0;
                 obj.w = 0;
-            elseif timeNow<getTrajectoryDuration(obj)-tPause
-                vr = 0.3*obj.kv + 0.14125*(obj.kv/obj.ks)*sin(timeNow*obj.kv/2*obj.ks);
-                vl = 0.3*obj.kv - 0.14125*(obj.kv/obj.ks)*sin(timeNow*obj.kv/2*obj.ks);
+            elseif timeNow<getTrajectoryDuration(obj)-obj.tPause
+                vr = 0.3*obj.Kv + 0.14125*(obj.Kv/obj.Ks)*sin(timeNow*obj.Kv/(2*obj.Ks));
+                vl = 0.3*obj.Kv - 0.14125*(obj.Kv/obj.Ks)*sin(timeNow*obj.Kv/(2*obj.Ks));
                 [obj.v,obj.w] = lrtovw(vl,vr);
             else
                 obj.v = 0;
