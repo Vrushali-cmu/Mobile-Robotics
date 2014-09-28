@@ -32,22 +32,28 @@ classdef robotTrajectory < handle
                 obj.poses(i,3) = temp_theta+obj.omega(i-1)*dt/2;
             end
         end 
-        %{
-       function velocity = getVelocityAtTime(obj, t)
-           for time=0:dt:t
-              obj.V = (vr+vl)/2 
-              dist = dist + velocity * dt;
-           end
+        
+       function vel_t = getVelocityAtTime(obj, t)
+           vel_t = interp1(obj.time, obj.velocity, t); 
        end
-       function distance = getVelocityAttime(obj, t)
-            for time=0:dt:t
-                 obj.w = (vr-vl)/2 ;   
-            end
-       end
-       function pose = getPosesAtAttime(obj,t)
-           pose = pose()           
-       end
-       %}
        
-   end
+       function dist_t = getVelocityAttime(obj, t)
+           dist_t = interp1(obj.time, obj.distance, t); 
+       end
+       
+       function pose_t = getPosesAttime(obj,t)
+           pose_t = interp1(obj.time, obj.poses, t); 
+       end
+       
+       function omega_t = getOmegaAttime(obj, t)
+           omega_t = interp1(obj.time, obj.omega, t); 
+       end
+       
+       function omega_dist = getOmegaAtDistance(obj,dist)
+           t_dist = interp1(obj.distance,obj.time,dist);
+           omega_dist = interp1(obj.time,obj.omega,t_dist);
+       end
+           
+       
+end   
 end
