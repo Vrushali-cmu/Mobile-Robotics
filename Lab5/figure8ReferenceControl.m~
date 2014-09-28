@@ -6,7 +6,6 @@ classdef figure8ReferenceControl < handle
         Ks
         Kv
         tPause
-        robotObj
     end
     
     methods
@@ -14,7 +13,7 @@ classdef figure8ReferenceControl < handle
             obj.Ks = Ks;
             obj.Kv = Kv;
             obj.tPause = tPause;
-            obj.robotObj = robotModel();
+            robotobj = robotModel;
         end
         
         function obj = computeControl(obj,timeNow)
@@ -22,9 +21,9 @@ classdef figure8ReferenceControl < handle
                 obj.v = 0;
                 obj.w = 0;
             elseif timeNow<getTrajectoryDuration(obj)-obj.tPause
-                vr = 0.3*obj.Kv + 0.14125*(obj.Kv/obj.Ks)*sin((timeNow-obj.tPause)*obj.Kv/(2*obj.Ks));
-                vl = 0.3*obj.Kv - 0.14125*(obj.Kv/obj.Ks)*sin((timeNow-obj.tPause)*obj.Kv/(2*obj.Ks));
-                [obj.v,obj.w] = obj.robotObj.vlvrToVw(vl,vr);
+                vr = 0.3*obj.Kv + 0.14125*(obj.Kv/obj.Ks)*sin(timeNow*obj.Kv/(2*obj.Ks));
+                vl = 0.3*obj.Kv - 0.14125*(obj.Kv/obj.Ks)*sin(timeNow*obj.Kv/(2*obj.Ks));
+                [obj.v,obj.w] = robotObj.(vl,vr);
             else
                 obj.v = 0;
                 obj.w =0;
@@ -32,7 +31,7 @@ classdef figure8ReferenceControl < handle
         end
         
         function duration = getTrajectoryDuration(obj)
-            duration = 12.565*obj.Ks/obj.Kv + 2*obj.tPause;
+            duration = 12.565*obj.Ks/obj.Kv;
         end
     end
 end

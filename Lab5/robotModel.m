@@ -1,9 +1,9 @@
 classdef robotModel < handle
-    properties
+    properties(Constant)
         W = 0.235; %width of the robot (in m)
         W2 = 0.1175;  %width/2 of the robot (in m)
     end
-    methods(Static)
+    methods(Static=true)
         function [vl,vr] = VwTovlvr(V,w)
             vl = V-W2*w;   %left wheel velocity
             vr = V+W2*w;   %right wheel velocity
@@ -19,7 +19,7 @@ classdef robotModel < handle
         end
         function [V w] = vlvrToVw(vl,vr)
             V = (vl+vr)/2;  %velocity
-            w = (vr-vl)/W;  %angular velocity
+            w = (vr-vl)/robotModel.W;  %angular velocity
         end
     end
 end
