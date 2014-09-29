@@ -5,8 +5,8 @@ classdef robotModel < handle
     end
     methods(Static=true)
         function [vl,vr] = VwTovlvr(V,w)
-            vl = V-W2*w;   %left wheel velocity
-            vr = V+W2*w;   %right wheel velocity
+            vl = V-robotModel.W2*w;   %left wheel velocity
+            vr = V+robotModel.W2*w;   %right wheel velocity
             
             %saturate absolute velocities at 0.3 m/s
             if abs(vl)>0.3

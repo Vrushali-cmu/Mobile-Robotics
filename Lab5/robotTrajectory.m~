@@ -12,6 +12,7 @@ classdef robotTrajectory < handle
    end
    methods
         function obj = robotTrajectory()
+            %robot_obj = robotModel();
             velocity_obj = figure8ReferenceControl(obj.Ks,obj.Kv,obj.t_pause);
             tf = velocity_obj.getTrajectoryDuration();
             obj.distance = zeros(obj.num_samples,1);
@@ -61,7 +62,7 @@ classdef robotTrajectory < handle
                B = amax*tramp;
                C = 0.5*amax*tramp^2 + vmax*-dist;
                t = (-B+sqrt(B^2-4*A*C))/(2*A);
-               t = tPause+tramp+t0+t;
+               t = tf-tPause-tramp+t;
            end
            omega_dist = obj.getOmegaAttime(t);
        end
