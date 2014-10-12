@@ -16,6 +16,7 @@ classdef trajectoryFollower < handle
     methods
         function obj = trajectoryFollower(robot_name,feedback)
             obj.rob = neato(robot_name);
+            pause(2);
             obj.vmax = 0.15;
             obj.amax = 3*obj.vmax;
             obj.x_arr = zeros(1000,1);
@@ -48,8 +49,9 @@ classdef trajectoryFollower < handle
         
         function [v,w,err_x,err_y] = feedback(obj, actual_pose, desired_pose)
     
-            kx = 0.0005;
-            ky = 0.0001;
+            kx = 0.0006;
+            ky = 0.00008;
+            
 
             error_pose = actual_pose - desired_pose;
             err_x_world = error_pose(1);
@@ -84,6 +86,8 @@ classdef trajectoryFollower < handle
             DistFinal = 0.3*12.565*robotTrajObj.Ks;
             tf = 2*robotTrajObj.t_pause + (DistFinal-(obj.vmax^2/obj.amax))/obj.vmax + 2*obj.vmax/obj.amax;
             i = 0;
+            kdx = 0.0005;
+            kdy = 0.0005;
             
             
             while(true)
@@ -101,10 +105,25 @@ classdef trajectoryFollower < handle
                 pose_des = getPoseAtDistance(robotTrajObj,sref,obj.amax,obj.vmax,robotTrajObj.t_pause,tf);
                 pose_actual = [x,y,th];
                 [vback,wback,errx,erry] = obj.feedback(pose_actual,pose_des);
+                obj.setXY(x,y,i);
+                obj.set_error(errx,erry,i);
                 obj.set_vw(vfor,vback,wfor,wback,i);
+                if i>1
+                    vbackd = kdx*(obj.err_x(i-1)-obj.err_x(i));
+                    wbackd = kdy*(obj.err_y(i-1)-obj.err_y(i));
+                    obj.v_back = obj.v_back+vbackd;
+                    obj.w_back = obj.w_back+wbackd;
+                end
+                
+                
                 
                 V = obj.v_forward(i)+obj.f*obj.v_back(i);
                 w = obj.w_forward(i)+obj.f*obj.w_back(i);
+                
+                %obj.set_vw(vfor,0,wfor,0,i);
+                
+                %V = obj.v_forward(i);
+                %w = obj.w_forward(i);
                 
                 [vl,vr] = robotObj.VwTovlvr(V,w);
                 [v_real,w_real] = lrtovw(vl_real,vr_real);
@@ -112,22 +131,22 @@ classdef trajectoryFollower < handle
                 x = x+v_real*cos(th)*dt;
                 y = y + v_real*sin(th)*dt;
                 th = th+0.5*w_real*dt;
-                obj.setXY(x,y,i);
-                obj.set_error(errx,erry,i);
+                
                 if abs(V)<1e-5
                     obj.rob.sendVelocity(0,0);
                 else
                     obj.rob.sendVelocity(vl,vr);
                 end
                 axis manual;
+                axis equal;
                 axis([-400 400 -400 400]);
                 scatter(x,y,'.','b');
                 hold on;
-                scatter(pose_des(1),pose_des(2),'.','r');
-                hold on;
+                %scatter(pose_des(1),pose_des(2),'.','r');
+                %hold on;
                 sref = sref + V*dt;
                 if(t_now>=tf-robotTrajObj.t_pause)
-                    obj.rob.sendVeloctiy(0,0);
+                    obj.rob.sendVelocity(0,0);
                     break;
                 end
                 t_prev=t_now;

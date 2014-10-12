@@ -1,2 +1,0 @@
-robot_name = 'pico';
-traj = trajectoryFollower('pico');

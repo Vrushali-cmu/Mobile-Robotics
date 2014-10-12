@@ -30,6 +30,8 @@ classdef robotTrajectory < handle
                 obj.poses(i,2) = obj.poses(i-1,2)+1000*obj.velocity(i-1)*sin(temp_theta)*dt;
                 obj.poses(i,3) = temp_theta+obj.omega(i-1)*dt/2;
             end
+            scatter(obj.poses(:,1),obj.poses(:,2),'r');
+            hold on;
         end 
         
        function vel_t = getVelocityAtTime(obj, t)
@@ -66,9 +68,10 @@ classdef robotTrajectory < handle
                    pose_dist = prev_pose;
                    return
                end
-               prev_pose = pose;
+               
            end
            pose_dist = getPosesAttime(obj,t);
+           prev_pose = pose_dist;
        end
        
        function omega_t = getOmegaAttime(obj, t)
@@ -76,7 +79,7 @@ classdef robotTrajectory < handle
        end
        
        function omega_dist = getOmegaAtDistance(obj,dist,amax,vmax,tPause,tf)
-           
+           persistent omega_prev;
            tramp = vmax/amax;
            t0 = tf-2*tPause-2*tramp;
            if dist<0.5*amax*tramp^2
@@ -90,14 +93,14 @@ classdef robotTrajectory < handle
                if B^2-4*A*C>0
                     t = (-B+sqrt(B^2-4*A*C))/(2*A);
                     t = tPause+tramp+t0+t;
-               
                else
-                   omega_dist = 0;
+                   omega_dist = omega_prev;
                    return
                end
                
            end
            omega_dist = obj.getOmegaAttime(t);
+           omega_prev = omega_dist;
        end
        
        
