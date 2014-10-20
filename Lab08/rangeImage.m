@@ -53,12 +53,14 @@ classdef rangeImage < handle
             axis([-2 2 -2 2])
         end
         
-        function [l_err num_err num pose] = findLineCandidate(obj,middle)
+        function [l_err num pose] = findLineCandidate(obj,middle)
             middle_index = find(obj.tArray==middle);
+            
             %initializing values of dist,i1 and i2 and i1_final and
             %                                               i2_final
             i1 = obj.inc(middle_index);
             i2 = obj.dec(middle_index);
+            num = 2;
             i1_final = i1;
             i2_final = i2;
             dist=0;
@@ -71,8 +73,9 @@ classdef rangeImage < handle
                 if(dist<0.2 & dist>0)
                     i1_final = i1;
                     i2_final = i2;
-                    i1 = obj.inc(i1)
-                    i2 = obj.dec(i2)
+                    i1 = obj.inc(i1);
+                    i2 = obj.dec(i2);
+                    num = num+2;
                 else
                     break;
                 end
@@ -83,11 +86,12 @@ classdef rangeImage < handle
             
             x = [obj.xArray(i1_final),obj.xArray(i2_final)];
             y = [obj.yArray(i1_final),obj.yArray(i2_final)];
+            %plot(y,x);
             distance = norm([x(1)-x(2) y(1)-y(2)]);
-            l_err = 0.125-distance;
-            th = atan2((y(1)-y(2)),(x(1)-x(2)));
+            l_err = abs(0.125-distance);
+            th = ((y(1)-y(2))/(x(1)-x(2)));
             pose = [obj.xArray(middle_index) obj.yArray(middle_index) th];
-            plot(y,x);
+            
             
             
         end

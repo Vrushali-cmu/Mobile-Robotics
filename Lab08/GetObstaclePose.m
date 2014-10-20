@@ -1,10 +1,29 @@
-load('temp_file.mat');
+function pose_f = GetObstaclePose(range_data)
+
+range_arr = zeros(360,2);
+
+i=1
+    while(true)
+        r = range_data(i);
+        [x y b] = irToXy(i,r);
+    
+        range_arr(i,1) = x;
+        range_arr(i,2) = y;
+    
+        i= i+1;
+    
+        if(i>360)
+            break;
+        end
+    end
+
+
 img = rangeImage(range_arr,1,0);
 img_corrected = rangeImage(range_arr,1,1);
 
-figure(1);
-img.plotXvsY();
-hold on;
+%figure(1);
+%img.plotXvsY();
+%hold on;
 
 [l_err_min num_f pose_f] = img.findLineCandidate(img_corrected.tArray(1));
 i=2;
@@ -19,13 +38,13 @@ while(i<img_corrected.numPix+1)
     end
     i=i+1;
 end
-plot(pose_f(1,2),pose_f(1,1),'+');
-hold on;
+%plot(pose_f(1,2),pose_f(1,1),'+');
+%hold on;
 %x = [pose_f(2)-pose_f(3) pose_f(1)+1];
 %y = [pose_f(2)+pose_f(3) pose_f(1)-1];
 %plot(y,x);
 
 
-figure(2);
-img_corrected.plotXvsY();
+%figure(2);
+%img_corrected.plotXvsY();
 
