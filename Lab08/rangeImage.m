@@ -40,40 +40,56 @@ classdef rangeImage < handle
         end
         
         function plotRvsTh(obj)
-            obj.removeBadPoints();
+            %obj.removeBadPoints();
             scatter(obj.tArray,obj.rArray);
             axis([0 2*pi 0 2]);
         end        
         
         function plotXvsY(obj)
-            obj.removeBadPoints();
-            figure(2);
+            %obj.removeBadPoints();
             %axis([-maxRange maxRange -maxRange maxRange]);
             %axis manual;
             scatter(obj.yArray,obj.xArray);
             axis([-2 2 -2 2])
         end
         
-        function [err num th] = findLineCandidate(obj,middle,maxLen)
-            % STILL IN THE WORKS
-            maxlen=0.13;
-            m=middle;
-            i=0;
-            i1=m;
-            i2=m;
+        function [l_err num_err num pose] = findLineCandidate(obj,middle)
+            middle_index = find(obj.tArray==middle);
+            %initializing values of dist,i1 and i2 and i1_final and
+            %                                               i2_final
+            i1 = obj.inc(middle_index);
+            i2 = obj.dec(middle_index);
+            i1_final = i1;
+            i2_final = i2;
+            dist=0;
             while(true)
-                i1 = inc(obj,i1);
-                i2 = dec(obj,i2);
-                [x1 y1] = [obj.xArray(i1) obj.yArray(i1)];
-                [x2 y2] = [obj.xArray(i2) obj.yArray(i2)];
-                if(norm([(x2-x1) (y2-y1)])>maxlen)
+                x1 = obj.xArray(i1);
+                y1 = obj.yArray(i1);
+                x2 = obj.xArray(i2);
+                y2 = obj.yArray(i2);
+                dist = norm([x1-x1 y1-y2])
+                if(dist<0.2 & dist>0)
+                    i1_final = i1;
+                    i2_final = i2;
+                    i1 = obj.inc(i1)
+                    i2 = obj.dec(i2)
+                else
                     break;
                 end
-                i=i+1;
             end
-            num = 2*i;
+            %now we have 2 end points. Time to plot a line that passes
+            %through them
             
-            i1 
+            
+            x = [obj.xArray(i1_final),obj.xArray(i2_final)];
+            y = [obj.yArray(i1_final),obj.yArray(i2_final)];
+            distance = norm([x(1)-x(2) y(1)-y(2)]);
+            l_err = 0.125-distance;
+            th = atan2((y(1)-y(2)),(x(1)-x(2)));
+            pose = [obj.xArray(middle_index) obj.yArray(middle_index) th];
+            plot(y,x);
+            
+            
         end
         
         function num = numPixels(obj)
@@ -89,10 +105,11 @@ classdef rangeImage < handle
         end
         
         function out = indexAdd(obj,a,b)
-            out = mod((a-1)+b, obj.numpix)+1;
+            out = mod((a-1)+b, obj.numPix)+1;
         end
     end
 end
+
         
         
         
