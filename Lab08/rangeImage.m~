@@ -55,15 +55,12 @@ classdef rangeImage < handle
         end
         
         function [err num th] = findLineCandidate(obj,middle,maxLen)
-            % STILL IN THE WORKS
             maxlen=0.13;
             m=middle;
             i=0;
-            i1=m;
-            i2=m;
             while(true)
-                i1 = inc(obj,i1);
-                i2 = dec(obj,i2);
+                i1 = inc(obj,i);
+                i2 = dec(obj,i);
                 [x1 y1] = [obj.xArray(i1) obj.yArray(i1)];
                 [x2 y2] = [obj.xArray(i2) obj.yArray(i2)];
                 if(norm([(x2-x1) (y2-y1)])>maxlen)
@@ -73,7 +70,7 @@ classdef rangeImage < handle
             end
             num = 2*i;
             
-            i1 
+            i1 = inc
         end
         
         function num = numPixels(obj)
