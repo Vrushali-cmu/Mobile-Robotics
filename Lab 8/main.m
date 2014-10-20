@@ -4,38 +4,47 @@ global t_robot;               %timestamp
 global vl_real;         %left wheel velocity
 global vr_real;         %right wheel velocity
 
-fb = 1;
+fb = 0;
 
 Vmax = 0.25;
 kv = 0.4*Vmax/0.25;
 kw = 0.8*Vmax/0.25;
-robot_name = 'nano';
+%{
+robot_name = 'centi';
 robot = neato(robot_name);
 pause(2);
+robot.startLaser();
+pause(2);
+%}
 lh = event.listener(robot.encoders,'OnMessageReceived',@neatoEncoderListener);
 %start laser
-%robot.startLaser();
 
 
-xf = 0;
-yf = 0.4;
-thf = 0;
-curve = cubicSpiral.planTrajectory(xf,yf,thf,1);
-curve.planVelocities(Vmax);
-figure(1);
-axis equal;
-axis([-3 3 -3 3]);
-plot(curve);
-hold on
+for i = 1:3
+    range_data = robot.laser.data.ranges;
+    pose = GetObstaclePose(range_data);
+    xf = pose(1);
+    yf = pose(2);
+    thf = pose(3);
+    curve = cubicSpiral.planTrajectory(xf,yf,thf,1);
+    curve.planVelocities(Vmax);
+    
+    
+    axis equal;
+    axis([-1 1 -1 1]);
+    plot(curve);
+    hold on
+    
+    %plot([xf+0.1 xf-0.1],[yf-0.1/sl yf+0.1/sl]); 
+    %hold on;
+    tstart = [];
+    prev_t = [];
+    dt = 0;
+    n = 0;
 
-tstart = [];
-prev_t = [];
-dt = 0;
-n = 0;
-
-x_real = 0;
-y_real = 0;
-th_real = 0;
+    x_real = 0;
+    y_real = 0;
+    th_real = 0;
 
 while true
     if isempty(tstart);
@@ -45,12 +54,13 @@ while true
     vl = curve.getvlAtTime(t_now);
     vr = curve.getvrAtTime(t_now);
     if t_now>(curve.timeArray(end)+1)
+        robot.sendVelocity(0,0);
         break;
     elseif t_now>curve.timeArray(end)
         vl = 0;
         vr = 0;
     end
-    
+    %{
     if fb~=0
         %position_desired = curve.getWorldAtTime(t_now);
         position_desired = curve.getPoseAtTime(t_now);
@@ -72,9 +82,9 @@ while true
         %error_array(:,i) = [err_x_robot; err_y_robot];
         [vl_feedback, vr_feedback] = vwtolr(v_feedback,w_feedback);
         vl = vl+vl_feedback;
-        vr = vr+vr_feedback;
-            
+        vr = vr+vr_feedback;  
     end 
+    %}
     if abs(vl)>0.3
         vl = sign(vl)*0.3;
     end
@@ -83,13 +93,13 @@ while true
         vr = sign(vr)*0.3;
     end
     robot.sendVelocity(vl,vr);
-    [v,w] = lrtovw(vl,vr);
+    [v,w] = lrtovw(vl_real,vr_real);
     th_real = th_real+w*dt*0.5;
     x_real = x_real+v*cos(th_real)*dt;
     y_real = y_real+v*sin(th_real)*dt;
     th_real = th_real+w*dt*0.5;
     scatter(x_real, y_real, '.', 'b');
-    axis([-3 3 -3 3]);
+    axis([-1 1 -1 1]);
     axis equal;
     hold on;
     if isempty(prev_t)
@@ -98,9 +108,13 @@ while true
         dt = t_now-prev_t;
     end
     prev_t = t_now;
-    pause(0.005);
+pause(0.005);
 end
 robot.sendVelocity(0,0);
+break;
+end
+robot.sendVelocity(0,0);
+robot.stopLaser;
 
         
         

@@ -72,11 +72,7 @@ for i = 1:3
     tstart = [];
     prev_t = [];
     dt = 0;
-%{
-    x_real = 0;
-    y_real = 0;
-    th_real = 0;
-%}
+
 n = 0
     while true
         n = n+1;
