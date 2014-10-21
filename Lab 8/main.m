@@ -20,12 +20,17 @@ lh = event.listener(robot.encoders,'OnMessageReceived',@neatoEncoderListener);
 %start laser
 
 
-for i = 1:3
+for i = 1:1
+    figure(i);
     range_data = robot.laser.data.ranges;
     pose = GetObstaclePose(range_data);
     xf = pose(1);
     yf = pose(2);
     thf = pose(3);
+    if sqrt(xf^2+yf^2)<0.08
+        disp('Object close enough');
+        break;
+    end
     curve = cubicSpiral.planTrajectory(xf,yf,thf,1);
     curve.planVelocities(Vmax);
     
@@ -41,10 +46,10 @@ for i = 1:3
     prev_t = [];
     dt = 0;
     n = 0;
-
     x_real = 0;
     y_real = 0;
     th_real = 0;
+    
 
 while true
     if isempty(tstart);
@@ -111,10 +116,9 @@ while true
 pause(0.005);
 end
 robot.sendVelocity(0,0);
-break;
+pause(1);
+
 end
-robot.sendVelocity(0,0);
-robot.stopLaser;
 
         
         

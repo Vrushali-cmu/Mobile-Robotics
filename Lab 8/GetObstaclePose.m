@@ -1,5 +1,5 @@
 function pose_f = GetObstaclePose(range_data)
-offset = 0.25;
+offset = 0.20;
 range_arr = zeros(360,2);
 
 i=1;
@@ -46,20 +46,26 @@ plot([x-0.625*cos(obslope)  x+0.625*cos(obslope)], [y-0.625*sin(obslope)  y+0.62
 hold on
 sl = atan(-1/pose_f(3));
 if x<0
-    offset = 0.10;
+    offset = 0.08;
 end
 
 if x<0 && y<0
     sl = sl+pi;
 elseif x<0 && y>0
-    sl = sl+pi;
+    if sl<0
+        sl = sl+pi;
+    end
+elseif x>0 && y<0
+    %sl = -abs(sl);
 end
 
-x1 = x+offset*cos(sl);
-y1 = y+offset*sin(sl);
-
+x1 = x-offset*cos(sl);
+y1 = y-offset*sin(sl);
+pose_f = [x1 y1 sl];
+%{
 x2 = x-offset*cos(sl);
 y2 = y-offset*sin(sl);
+
 d1 = sqrt(x1^2+y1^2);
 d2 = sqrt(x2^2+y2^2);
 if d1<d2
@@ -67,6 +73,7 @@ if d1<d2
 else
     pose_f = [x2 y2 sl];
 end
+%}
 
 
 
