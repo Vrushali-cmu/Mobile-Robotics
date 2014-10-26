@@ -9,17 +9,17 @@ classdef pose < handle
     end
     
     properties(Access = private)
-        poseVec;
+        
     end
     
     properties(Access = public)
-
+        poseVec;
     end
     
     methods(Static = true)
         function vec = matToPoseVec(mat)
             % Convert a homogeneous transform into a vector that can be
-            % passed to the contructor for this class.
+            % passed to the constructor for this class.
             x = mat(1,3);
             y = mat(2,3);
             w = atan2(-mat(1,2),mat(1,1));

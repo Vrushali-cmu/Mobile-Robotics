@@ -18,6 +18,45 @@ classdef lineMapLocalizer < handle
         errThresh = 0.0;
         gradThresh = 0.0;
     end
+    
+    methods(Static)
+        function [rad2 , po] = closestPointOnLineSegment(pi,p1,p2)
+        % Find point po on a line segment p1-p2 closest to a given 
+        % point pi and return the closest point and the square of
+        % the distance to it. The line segment has endpoints p1 
+        % and p2 (column vectors) and the point is pi. If the 
+        % closest point is an endpoint, returns infinity for rad2
+        % because such points are bad for lidar matching
+        % localization.
+            dx13 = pi(1) - p1(1);
+            dy13 = pi(2) - p1(2);
+            dx12 = p2(1) - p1(1);
+            dy12 = p2(2) - p1(2); 
+            dx23 = pi(1) - p2(1);
+            dy23 = pi(2) - p2(2);
+            v1 = [dx13 ; dy13];
+            v2 = [dx12 ; dy12];
+            v3 = [dx23 ; dy23];
+            v1dotv2 = dot(v1,v2);
+            v2dotv2 = dot(v2,v2);
+            v3dotv2 = dot(v3,v2);
+            if v1dotv2 > 0.0 && v3dotv2 < 0.0 % Closest is on segment
+                scale = v1dotv2/v2dotv2;
+                po = v2*scale + [p1(1) ; p1(2)];
+                dx = pi(1)-po(1);
+                dy = pi(2)-po(2);
+                rad2 = dx*dx+dy*dy;
+            elseif v1dotv2 <= 0.0 % Closest is first endpoint
+                po = [p1(1) ; p1(2)];
+                rad2 = inf;
+            else % Closest is second endpoint
+                po = [p2(1) ; p2(2)];
+                rad2 = inf;
+            end
+        end
+        
+    end
+    
     methods
         function obj = lineMapLocalizer(lines_p1,lines_p2,gain,errThresh,gradThresh)
             % create a lineMapLocalizer
@@ -34,9 +73,7 @@ classdef lineMapLocalizer < handle
         % array of start point and p2 is the array of end points.
             ro2 = inf;
             for i = 1:size(obj.lines_p1,2)
-                [r2 , ~] = 
-                lineMapLocalizer.closestPointOnLineSegment(pi,...
-                obj.lines_p1(:,i),obj.lines_p2(:,i));
+                [r2 , ~] = lineMapLocalizer.closestPointOnLineSegment(pi,obj.lines_p1(:,i),obj.lines_p2(:,i));
                 if(r2 < ro2); ro2 = r2; end; 
             end
         end
@@ -88,20 +125,21 @@ classdef lineMapLocalizer < handle
             eps = 0.001;
             % Calculation partial derivative for x
             dp = [eps ; 0.0 ; 0.0];
-            newPose = pose(poseIn.getPose+dp);
+            newPose = pose(poseIn.getPoseVec+dp);
             errPlus = fitError(obj,newPose,modelPts,false);
             J(:,1) = (errPlus-errPlus0)/eps;
             % Calculation partial derivative for y
             dp = [0.0 ; eps ; 0.0];
-            newPose = pose(poseIn.getPose+dp);
+            newPose = pose(poseIn.getPoseVec+dp);
             errPlus = fitError(obj,newPose,modelPts,false);
             J(:,2) = (errPlus-errPlus0)/eps;
             % Calculation partial derivative for th
             dp = [0.0 ; 0.0 ; eps];
-            newPose = pose(poseIn.getPose+dp);
+            newPose = pose(poseIn.getPoseVec+dp);
             errPlus = fitError(obj,newPose,modelPts,false);
             J(:,3) = (errPlus-errPlus0)/eps;
            
         end
 
     end
+end
