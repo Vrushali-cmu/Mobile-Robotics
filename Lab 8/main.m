@@ -4,7 +4,7 @@ global t_robot;               %timestamp
 global vl_real;         %left wheel velocity
 global vr_real;         %right wheel velocity
 
-fb = 0;
+fb = 1;
 
 Vmax = 0.25;
 kv = 0.4*Vmax/0.25;
@@ -65,7 +65,7 @@ while true
         vl = 0;
         vr = 0;
     end
-    %{
+    
     if fb~=0
         %position_desired = curve.getWorldAtTime(t_now);
         position_desired = curve.getPoseAtTime(t_now);
@@ -89,7 +89,7 @@ while true
         vl = vl+vl_feedback;
         vr = vr+vr_feedback;  
     end 
-    %}
+    
     if abs(vl)>0.3
         vl = sign(vl)*0.3;
     end
@@ -113,7 +113,7 @@ while true
         dt = t_now-prev_t;
     end
     prev_t = t_now;
-pause(0.005);
+%pause(0.005);
 end
 robot.sendVelocity(0,0);
 pause(1);

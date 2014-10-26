@@ -21,10 +21,10 @@ i=1;
 img = rangeImage(range_arr,1,0);
 img_corrected = rangeImage(range_arr,1,1);
 
-%figure(1);
-%img.plotXvsY();
-%hold on;
-
+figure(10);
+img.plotXvsY();
+hold on;
+figure(1)
 [l_err_min num_f pose_f] = img.findLineCandidate(img_corrected.tArray(1));
 i=2;
 while(i<img_corrected.numPix+1)
