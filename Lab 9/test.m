@@ -29,14 +29,14 @@ modelPts = [x1pts ; y1pts ; w1pts];
 % pick a pose
 dx = -0.1*rand();
 dy = -0.1*rand();
-dt = -0.05+0.2*rand();
-thePose = pose(0.0+dx,0.0+dy,0.0+dt);
+dt = -0.05-0.2*rand();
+thePose = pose(dx,dy,dt);
 
 
-gain = 0.01;
-errThresh = 0.001;
+gain = 0.02;
+errThresh = 0.002;
 gradThresh = 0.0005;
-maxIters = 500;
+maxIters = 200;
 
 lml = lineMapLocalizer(lines_p1, lines_p2,gain,errThresh, gradThresh);
 %[e,J] = lml.getJacobian(thePose,modelPts);

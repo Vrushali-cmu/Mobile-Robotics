@@ -85,7 +85,8 @@ rad2 = inf;
     worldPts = pose.bToA()*ptsInModelFrame;
     for i = 1:size(worldPts,2)
         r2 = obj.closestSquaredDistanceToLines(worldPts(:,i));
-        if(sqrt(r2) < obj.maxError)
+        %if(sqrt(r2) < obj.maxErr)
+        if(sqrt(r2)>obj.maxErr)
             ids = [ids i];
         end 
     end
@@ -117,65 +118,6 @@ rad2 = inf;
         avgErr = inf;
     end
  end
- 
- function [success, outPose] =  refinePose(obj,inPose,ptsInModelFrame,maxIters)
-    % refine robot pose in world (inPose) based on lidar
-    % registration. Terminates if maxIters iterations is
-    % exceeded or if insufficient points match the lines.
-    % Even if the minimum is not found, outPose will contain 
-    % any changes that reduced the fit error. Pose changes that
-    % increase fit error are not included and termination 
-    % occurs thereafter.
-    error = inf;
-    newPose = pose(inPose.x,inPose.y,inPose.th);
-    n = 0;
-    err_array = zeros(1,500);
-    figure(2);
-    prevError = [];
-    while error>obj.errThresh
-        n = n+1;
-        [error,J] = obj.getJacobian(newPose,ptsInModelFrame);
-        dx = -obj.gain*J(1);
-        dy = -obj.gain*J(2);
-        dt = -obj.gain*J(3);
-        newPose = pose(newPose.x+dx, newPose.y+dy, newPose.th+dt);
-        worldPts = newPose.bToA()*ptsInModelFrame;
-        
-        clf;
-        plot(obj.lines_p1(1,:),obj.lines_p1(2,:));
-        hold on
-        plot(obj.lines_p2(1,:),obj.lines_p2(2,:));
-        hold on
-        scatter(worldPts(1,:),worldPts(2,:),'x');
-        hold on
-        
-        err_array(n) = error;
-        if n>maxIters
-            success = 0;
-            outPose = pose(newPose.x,newPose.y,newPose.th);
-            return;
-        end
-        if isempty(prevError)
-            prevError = inf;
-            continue;
-        end
-        dE = abs(error-prevError);
-        if dE<obj.gradThresh
-            break;
-        end
-        
-        pause(0.1);
-        
-        
-    end
-    success = 1;
-    outPose = pose(newPose.x,newPose.y,newPose.th);
-    %figure(3);
-    %plot(err_array);
-    
- end
-
- 
  function [errPlus0,J] = getJacobian(obj,poseIn,modelPts)
     % Computes the gradient of the error function
  
@@ -199,6 +141,93 @@ rad2 = inf;
     dEth = fitError(obj,newPose,modelPts,false)-errPlus0;
     J(:,3) = dEth/eps;
  end
+ 
+ function [success, outPose] =  refinePose(obj,inPose,ptsInModelFrame,maxIters)
+    
+     % refine robot pose in world (inPose) based on lidar
+    % registration. Terminates if maxIters iterations is
+    % exceeded or if insufficient points match the lines.
+    % Even if the minimum is not found, outPose will contain 
+    % any changes that reduced the fit error. Pose changes that
+    % increase fit error are not included and termination 
+    % occurs thereafter.
+    %figure(2);
+    %tic;
+    error = inf;
+    newPose = pose(robotModel.senToWorld(inPose));
+    ids = throwOutliers(obj,newPose,ptsInModelFrame);
+    ptsInModelFrame(:,ids) = [];
+    %newPose = pose(inPose.x,inPose.y,inPose.th);
+    
+    n = 0;
+    err_array = zeros(1,500);
+    prevError = [];
+    figure(1);
+    while error>obj.errThresh
+        n = n+1;
+        [error,J] = obj.getJacobian(newPose,ptsInModelFrame);
+        dx = -obj.gain*J(1);
+        dy = -obj.gain*J(2);
+        dt = -obj.gain*J(3);
+        
+        newPose = pose(newPose.getPose+[dx;dy;dt]);
+        
+        worldPts = newPose.bToA()*ptsInModelFrame;
+        %plot([newPose.x newPose.x+0.3*cos(newPose.th)], [newPose.y newPose.y+0.3*sin(newPose.th)],'r');
+        %hold on;
+        %plot([0 0 1.3], [1.3 0 0]);
+        
+        %plot([-2 -2 2 2], [-2 2 2 -2]);
+        %hold on;
+        %scatter(worldPts(1,:),worldPts(2,:),'x');
+        %axis equal;
+        %axis([-1 2 -1 2]);
+        %scatter(n,error,'.');
+        %hold on;
+        err_array(n) = error;
+        if n>maxIters
+            success = 0;
+            outPose = pose(newPose.x,newPose.y,newPose.th);
+            %outPose = pose(robotModel.robToWorld(outPose));
+            disp('Could not optimize');
+            return;
+        end
+        if isempty(prevError)
+            prevError = inf;
+            continue;
+        end
+        dE = abs(error-prevError);
+        %{
+        if dE<obj.gradThresh
+            break;
+        end
+        %}
+        prevError = error;
+        %pause(0.2);
+        %clf;
+        
+        
+    end
+    success = 1;
+    outPose = pose(robotModel.robToWorld(newPose));
+    
+    
+    %figure(3);
+    %plot(err_array);
+    %{
+    figure(4);
+    plot([0 0 1.3], [1.3 0 0]);
+        hold on;
+        scatter(worldPts(1,:),worldPts(2,:),'x');
+        hold on;
+    %}
+    
+    
+    
+ end
+
+ 
+ 
  
  end
 end
